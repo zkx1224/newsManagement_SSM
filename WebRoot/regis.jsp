@@ -1,28 +1,18 @@
 <%@ page import="javafx.scene.control.Alert" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page language="java" pageEncoding="UTF-8"%>
-<%
-    String path = request.getContextPath();
-    String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
-%>
-
 <!DOCTYPE HTML PUBLIC "-//W3C//Dtd HTML 4.01 transitional//EN">
 <html>
 <head>
-    <base href="<%=basePath%>">
     <title>用户注册</title>
-    <meta http-equiv="pragma" content="no-cache">
-    <meta http-equiv="cache-control" content="no-cache">
-    <meta http-equiv="expires" content="0">
-    <meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
-    <meta http-equiv="description" content="This is my page">
-
+    <link href="/images/bg.png" type="image/x-icon">
 </head>
 <body>
-<form action="<%= path %>/registerService" method="post">
+<form action="/user/register1" method="post" id="regis">
     <table border="0" cellpadding="0" cellspacing="0" align="center" width="530">
         <tr>
-            <td height="108" colspan="2"><img src="images/top.jpg"></td>
+            <td height="108" colspan="2"><img src="/images/top.jpg"></td>
+
         </tr>
         <tr>
             <td width="107" height="36">用户名：</td>
@@ -30,7 +20,7 @@
         </tr>
         <tr>
             <td width="107" height="36">密码：</td>
-            <td width="524"><input name="passWord" type="password" placeholder="密码" id="pwd1" onblur="pwdlength()"><span id="pwd"></span></td>
+            <td width="524"><input name="userPassword" type="password" placeholder="密码" id="pwd1" onblur="pwdlength()"><span id="pwd"></span></td>
         </tr>
         <tr>
             <td width="107" height="36">确认密码：</td>
@@ -39,23 +29,23 @@
         <tr>
             <td width="107" height="36">性别：</td>
             <td width="524">
-                <input name="sex" type="radio"   value="男" checked>男&nbsp;
-                <input name="sex" type="radio" value="女" class="input">女
+                <input name="userSex" type="radio" value="0" checked>男&nbsp;
+                <input name="userSex" type="radio" value="1" class="input">女
             </td>
         </tr>
         <tr>
             <td width="117" height="36" >电子邮件地址：</td>
-            <td width="524"><input name="email" type="email" placeholder="Email">
+            <td width="524"><input name="userEmail" type="email" placeholder="Email" id="email">
                 输入正确的Email地址</td>
         </tr>
         <tr>
             <td width="107" height="36">出生日期：</td>
             <td width="524">
-                <input name="date" type="date">
+                <input name="userBirthday" type="date" id="date">
             </td>
         </tr>
         <tr><td colspan="2" align="center">
-            <input type="submit" value="同意以下协议条款并提交">
+            <button id="register" type="submit" onsubmit="aj()">同意以下协议条款并提交</button>
         </td></tr>
         <tr><td colspan="2">
   <textarea cols="" rows="" readonly="readonly" style="width:480px;height:110px;font-size:12px;color:#666">
@@ -73,55 +63,162 @@
 </form>
 </body>
 <script src="/js/jquery-1.11.3.min.js"></script>
+<script src="/js/layui/layui.all.js"></script>
 <script>
-    function aj(){
-        var uid = $("#userName").val();
-        $.ajax({
-            async : true,    //表示请求是否异步处理
-            type : "post",    //请求类型
-            url : "/checkService",//请求的 URL地址
-            dataType : "json",//返回的数据类型
-            data:{"userName":uid},
-            success:function (result) {
-                console.log("result.msg:"+result.msg)
-                if (result.msg==1){
-                } else {
-                    $("#name").html("<font color='red'>用户名已存在 </font>");
+        function aj() {
+            var uid = $("#userName").val();
+            $.ajax({
+                async: true,    //表示请求是否异步处理
+                type: "post",    //请求类型
+                url: "/user/check",//请求的 URL地址
+                dataType: "json",//返回的数据类型
+                data: {"userName": uid},
+                success: function (result) {
+                    console.log("result.msg:" + result.msg)
+                    if (result.msg == 1) {
+                        $("#name").html("<font color='green'>用户名可以使用 </font>");
+                    } else {
+                        $("#name").html("<font color='red'>用户名已存在 </font>");
+                        layer.msg('用户名已存在', {
+                            time: 2000,
+                        })
+                        return false;
+                    }
+                    var regex = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{4,16}$";
+                    if (uid.match(regex) == null) {
+                        $("#uname").html("<font color='red'>用户名不符合规范</font>");
+                        layer.msg('请输入正确格式的用户名', {
+                            time: 2000,
+                        })
+                        return false;
+                    } else {
+                        $("#uname").html("<font color='green'>用户名符合规范</font>");
+                        return true;
+                    }
+                },
+                error: function (error) {
+                    alert("错误1")
                 }
-                var regex = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{4,16}$";
-                if(uid.match(regex)==null){
-                    $("#uname").html("<font color='red'>用户名不符合规范</font>");
-                }else {
-                    $("#uname").html("<font color='green'>用户名符合规范</font>");
-                }
-            },
-            error:function (error) {
-                alert("错误")
+            });
+        };
+        function pwdlength() {
+            var pwd1 = $("#pwd1").val();
+            var pwd2 = $("#pwd2").val();
+            if (pwd1.length < 6 || pwd1.length > 12) {
+                $("#pwd").html("<font color='green'>密码长度小于6或大于12</font>");
+                layer.msg('请输入正确长度的密码', {
+                    time: 2000,
+                })
+                return false;
+            } else {
+                $("#pwd").html("<font color='green'>密码长度符合规范</font>");
+                return true;
             }
+        }
+
+        function validate() {
+            var pwd1 = $("#pwd1").val();
+            var pwd2 = $("#pwd2").val();
+            <!-- 对比两次输入的密码 -->
+            if (pwd1 == pwd2) {
+                $("#tishi").html("<font color='green'>两次密码相同</font>");
+                return true;
+            } else {
+                $("#tishi").html("<font color='red'>两次密码不相同</font>");
+                return false;
+            }
+        }
+
+        $(document).ready(function () {
+            $("#register").click(function () {
+                if (check() == -1) {
+                    layer.msg('请输入用户名', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -2) {
+                    layer.msg('请输入密码', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -3) {
+                    layer.msg('请重新输入密码', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -4) {
+                    layer.msg('请输入email', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -5) {
+                    layer.msg('请输入出生日期', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -6) {
+                    layer.msg('请输入正确的用户名', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -7) {
+                    layer.msg('请输入正确格式的密码', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else if (check() == -8) {
+                    layer.msg('请输入相同的密码', {
+                        time: 2000, //2s后自动关闭
+                    });
+                    return false;
+                } else {
+                    return true;
+                }
+            });
         });
-    };
-    function pwdlength() {
-        var pwd1 = $("#pwd1").val();
-        var pwd2 = $("#pwd2").val();
-        if(pwd1.length<6||pwd1.length>12){
-            $("#pwd").html("<font color='green'>密码长度小于6或大于12</font>");
-        }else {
-            $("#pwd").html("<font color='green'>密码长度符合规范</font>");
+
+        function check() {
+            var userName = $("#userName").val();
+            var pwd1 = $("#pwd1").val();
+            var pwd2 = $("#pwd2").val();
+            var email = $("#email").val();
+            var date = $("#date").val();
+            if (userName == "" || userName == null) {
+                regis.userName.focus();
+                return -1;
+            }
+            if (pwd1 == "" || pwd2 == null) {
+                regis.pwd1.focus();
+                return -2;
+            }
+            if (pwd2 == "" || pwd2 == null) {
+                regis.pwd2.focus();
+                return -3;
+            }
+            if (email == "" || email == null) {
+                regis.email.focus();
+                return -4;
+            }
+            if (date == "" || date == null) {
+                regis.date.focus();
+                return -5;
+            }
+            if (aj() == false) {
+                regis.userName.focus();
+                return -6;
+            }
+            if (pwdlength() == false) {
+                regis.pwd1.focus();
+                return -7;
+            }
+            if (validate() == false) {
+                regis.pwd2.focus();
+                return -8;
+            }
         }
-    }
-    function validate() {
-        var pwd1 = $("#pwd1").val();
-        var pwd2 = $("#pwd2").val();
-        <!-- 对比两次输入的密码 -->
-        if(pwd1 == pwd2) {
-            $("#tishi").html("<font color='green'>两次密码相同</font>");
-            $("#submit").disabled = false;
-        }
-        else {
-            $("#tishi").html("<font color='red'>两次密码不相同</font>");
-            $("#submit").disabled = true;
-        }
-    }
+
+
+
 </script>
 </html>
 
